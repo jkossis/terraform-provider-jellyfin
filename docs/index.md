@@ -38,5 +38,5 @@ provider "jellyfin" {
 ### Optional
 
 - `endpoint` (String) The Jellyfin server URL (e.g., http://localhost:8096). Can also be set via the `JELLYFIN_ENDPOINT` environment variable.
-- `username` (String) The Jellyfin username for authentication. Can also be set via the `JELLYFIN_USERNAME` environment variable.
 - `password` (String, Sensitive) The Jellyfin password for authentication. Can also be set via the `JELLYFIN_PASSWORD` environment variable.
+- `username` (String) The Jellyfin username for authentication. Can also be set via the `JELLYFIN_USERNAME` environment variable.
