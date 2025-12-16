@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	// Default client identification for Jellyfin
+	// Default client identification for Jellyfin.
 	DefaultClientName    = "Terraform"
 	DefaultDeviceName    = "Terraform Provider"
 	DefaultDeviceID      = "terraform-provider-jellyfin"

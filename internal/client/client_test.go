@@ -324,7 +324,7 @@ func TestNewClientWithAuthAndConfig_partialConfig(t *testing.T) {
 	}
 }
 
-// Helper function for string contains
+// Helper function for string contains.
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
 }

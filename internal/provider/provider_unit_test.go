@@ -151,7 +151,10 @@ func TestNew_differentVersions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.version, func(t *testing.T) {
 			factory := New(tc.version)
-			p := factory().(*JellyfinProvider)
+			p, ok := factory().(*JellyfinProvider)
+			if !ok {
+				t.Fatal("Expected provider to be *JellyfinProvider")
+			}
 			if p.version != tc.version {
 				t.Errorf("Expected version %q, got %q", tc.version, p.version)
 			}
