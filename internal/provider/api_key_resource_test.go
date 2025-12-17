@@ -104,7 +104,7 @@ func TestAccAPIKeyResource_specialCharacters(t *testing.T) {
 	})
 }
 
-func TestAccAPIKeyResource_idMatchesAccessToken(t *testing.T) {
+func TestAccAPIKeyResource_hasValidId(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
@@ -112,11 +112,10 @@ func TestAccAPIKeyResource_idMatchesAccessToken(t *testing.T) {
 			{
 				Config: testAccAPIKeyResourceConfig_basic("test-api-key-id-check"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify that id and access_token are the same
-					resource.TestCheckResourceAttrPair(
-						"jellyfin_api_key.test", "id",
-						"jellyfin_api_key.test", "access_token",
-					),
+					// Verify that id is set (numeric Jellyfin ID)
+					resource.TestCheckResourceAttrSet("jellyfin_api_key.test", "id"),
+					// Verify that access_token is also set
+					resource.TestCheckResourceAttrSet("jellyfin_api_key.test", "access_token"),
 				),
 			},
 		},

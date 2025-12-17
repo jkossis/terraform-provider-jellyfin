@@ -59,9 +59,16 @@ type AuthenticateResponse struct {
 
 // APIKey represents a Jellyfin API key.
 type APIKey struct {
+	Id          int64  `json:"Id"`
 	AccessToken string `json:"AccessToken"`
 	AppName     string `json:"AppName"`
+	AppVersion  string `json:"AppVersion"`
+	DeviceId    string `json:"DeviceId"`
+	DeviceName  string `json:"DeviceName"`
+	UserId      string `json:"UserId"`
+	IsActive    bool   `json:"IsActive"`
 	DateCreated string `json:"DateCreated"`
+	DateRevoked string `json:"DateRevoked"`
 }
 
 // APIKeyQueryResult represents the response from GetKeys.
@@ -199,8 +206,24 @@ func (c *Client) GetKeys(ctx context.Context) (*APIKeyQueryResult, error) {
 	return &result, nil
 }
 
-// GetKey retrieves a specific API key by its access token.
-func (c *Client) GetKey(ctx context.Context, accessToken string) (*APIKey, error) {
+// GetKeyByID retrieves a specific API key by its ID.
+func (c *Client) GetKeyByID(ctx context.Context, id int64) (*APIKey, error) {
+	result, err := c.GetKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range result.Items {
+		if key.Id == id {
+			return &key, nil
+		}
+	}
+
+	return nil, nil // Not found
+}
+
+// GetKeyByAccessToken retrieves a specific API key by its access token.
+func (c *Client) GetKeyByAccessToken(ctx context.Context, accessToken string) (*APIKey, error) {
 	result, err := c.GetKeys(ctx)
 	if err != nil {
 		return nil, err

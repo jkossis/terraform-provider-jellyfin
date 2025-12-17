@@ -65,7 +65,7 @@ func (r *APIKeyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			"access_token": schema.StringAttribute{
 				Computed:            true,
 				Sensitive:           true,
-				MarkdownDescription: "The API key token (only available after creation).",
+				MarkdownDescription: "The API key token used for authentication.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -122,9 +122,9 @@ func (r *APIKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	existingTokens := make(map[string]bool)
+	existingIDs := make(map[int64]bool)
 	for _, key := range existingKeys.Items {
-		existingTokens[key.AccessToken] = true
+		existingIDs[key.Id] = true
 	}
 
 	// Create the new API key
@@ -143,7 +143,7 @@ func (r *APIKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	var createdKey *client.APIKey
 	for _, key := range newKeys.Items {
-		if !existingTokens[key.AccessToken] && key.AppName == appName {
+		if !existingIDs[key.Id] && key.AppName == appName {
 			createdKey = &key
 			break
 		}
@@ -154,7 +154,8 @@ func (r *APIKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Set the resource data
+	// Set the resource data using the AccessToken as the terraform resource ID
+	// (Jellyfin API doesn't return a stable Id for API keys)
 	data.ID = types.StringValue(createdKey.AccessToken)
 	data.AccessToken = types.StringValue(createdKey.AccessToken)
 	data.DateCreated = types.StringValue(createdKey.DateCreated)
@@ -173,12 +174,10 @@ func (r *APIKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	accessToken := data.AccessToken.ValueString()
-	if accessToken == "" {
-		accessToken = data.ID.ValueString()
-	}
+	// The ID is the AccessToken
+	accessToken := data.ID.ValueString()
 
-	key, err := r.client.GetKey(ctx, accessToken)
+	key, err := r.client.GetKeyByAccessToken(ctx, accessToken)
 
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read API key: %s", err))
@@ -224,12 +223,11 @@ func (r *APIKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
+	// The Jellyfin API expects the AccessToken in the delete path, not the Id
 	accessToken := data.AccessToken.ValueString()
-	if accessToken == "" {
-		accessToken = data.ID.ValueString()
-	}
 
 	tflog.Debug(ctx, "Deleting API key", map[string]interface{}{
+		"id":           data.ID.ValueString(),
 		"access_token": accessToken,
 	})
 

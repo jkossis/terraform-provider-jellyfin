@@ -38,7 +38,7 @@ output "api_key_created_at" {
 
 ### Read-Only
 
-- `access_token` (String, Sensitive) The API key token (only available after creation).
+- `access_token` (String, Sensitive) The API key token used for authentication.
 - `date_created` (String) The date and time when the API key was created.
 - `id` (String) The unique identifier for this resource (same as access_token).
 

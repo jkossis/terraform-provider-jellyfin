@@ -109,7 +109,7 @@ func (d *APIKeyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	var err error
 
 	if hasAccessToken {
-		key, err = d.client.GetKey(ctx, data.AccessToken.ValueString())
+		key, err = d.client.GetKeyByAccessToken(ctx, data.AccessToken.ValueString())
 	} else {
 		key, err = d.client.FindKeyByAppName(ctx, data.AppName.ValueString())
 	}
@@ -127,7 +127,7 @@ func (d *APIKeyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// Set the data
+	// Set the data using the AccessToken as the data source ID
 	data.ID = types.StringValue(key.AccessToken)
 	data.AppName = types.StringValue(key.AppName)
 	data.AccessToken = types.StringValue(key.AccessToken)

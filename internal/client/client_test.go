@@ -359,11 +359,13 @@ func TestGetKeys(t *testing.T) {
 		result := APIKeyQueryResult{
 			Items: []APIKey{
 				{
+					Id:          1,
 					AccessToken: "token-1",
 					AppName:     "App One",
 					DateCreated: "2024-01-01T00:00:00.0000000Z",
 				},
 				{
+					Id:          2,
 					AccessToken: "token-2",
 					AppName:     "App Two",
 					DateCreated: "2024-01-02T00:00:00.0000000Z",
@@ -389,6 +391,10 @@ func TestGetKeys(t *testing.T) {
 		t.Errorf("Expected 2 items, got %d", len(result.Items))
 	}
 
+	if result.Items[0].Id != 1 {
+		t.Errorf("Expected id 1, got %d", result.Items[0].Id)
+	}
+
 	if result.Items[0].AccessToken != "token-1" {
 		t.Errorf("Expected access token 'token-1', got %s", result.Items[0].AccessToken)
 	}
@@ -402,16 +408,18 @@ func TestGetKeys(t *testing.T) {
 	}
 }
 
-func TestGetKey(t *testing.T) {
+func TestGetKeyByID(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		result := APIKeyQueryResult{
 			Items: []APIKey{
 				{
+					Id:          1,
 					AccessToken: "token-1",
 					AppName:     "App One",
 					DateCreated: "2024-01-01T00:00:00.0000000Z",
 				},
 				{
+					Id:          2,
 					AccessToken: "token-2",
 					AppName:     "App Two",
 					DateCreated: "2024-01-02T00:00:00.0000000Z",
@@ -427,7 +435,89 @@ func TestGetKey(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(server.URL, "test-api-key")
-	key, err := client.GetKey(context.Background(), "token-2")
+	key, err := client.GetKeyByID(context.Background(), 2)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if key == nil {
+		t.Fatal("Expected key to be returned")
+	}
+
+	if key.Id != 2 {
+		t.Errorf("Expected id 2, got %d", key.Id)
+	}
+
+	if key.AccessToken != "token-2" {
+		t.Errorf("Expected access token 'token-2', got %s", key.AccessToken)
+	}
+
+	if key.AppName != "App Two" {
+		t.Errorf("Expected app name 'App Two', got %s", key.AppName)
+	}
+}
+
+func TestGetKeyByID_notFound(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		result := APIKeyQueryResult{
+			Items: []APIKey{
+				{
+					Id:          1,
+					AccessToken: "token-1",
+					AppName:     "App One",
+					DateCreated: "2024-01-01T00:00:00.0000000Z",
+				},
+			},
+			TotalRecordCount: 1,
+			StartIndex:       0,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(result)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-api-key")
+	key, err := client.GetKeyByID(context.Background(), 999)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if key != nil {
+		t.Error("Expected nil key for nonexistent id")
+	}
+}
+
+func TestGetKeyByAccessToken(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		result := APIKeyQueryResult{
+			Items: []APIKey{
+				{
+					Id:          1,
+					AccessToken: "token-1",
+					AppName:     "App One",
+					DateCreated: "2024-01-01T00:00:00.0000000Z",
+				},
+				{
+					Id:          2,
+					AccessToken: "token-2",
+					AppName:     "App Two",
+					DateCreated: "2024-01-02T00:00:00.0000000Z",
+				},
+			},
+			TotalRecordCount: 2,
+			StartIndex:       0,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(result)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-api-key")
+	key, err := client.GetKeyByAccessToken(context.Background(), "token-2")
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -446,11 +536,12 @@ func TestGetKey(t *testing.T) {
 	}
 }
 
-func TestGetKey_notFound(t *testing.T) {
+func TestGetKeyByAccessToken_notFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		result := APIKeyQueryResult{
 			Items: []APIKey{
 				{
+					Id:          1,
 					AccessToken: "token-1",
 					AppName:     "App One",
 					DateCreated: "2024-01-01T00:00:00.0000000Z",
@@ -466,7 +557,7 @@ func TestGetKey_notFound(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(server.URL, "test-api-key")
-	key, err := client.GetKey(context.Background(), "nonexistent-token")
+	key, err := client.GetKeyByAccessToken(context.Background(), "nonexistent-token")
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -570,16 +661,19 @@ func TestFindKeyByAppName(t *testing.T) {
 		result := APIKeyQueryResult{
 			Items: []APIKey{
 				{
+					Id:          1,
 					AccessToken: "token-1",
 					AppName:     "App One",
 					DateCreated: "2024-01-01T00:00:00.0000000Z",
 				},
 				{
+					Id:          2,
 					AccessToken: "token-2",
 					AppName:     "My Target App",
 					DateCreated: "2024-01-02T00:00:00.0000000Z",
 				},
 				{
+					Id:          3,
 					AccessToken: "token-3",
 					AppName:     "App Three",
 					DateCreated: "2024-01-03T00:00:00.0000000Z",
@@ -605,6 +699,10 @@ func TestFindKeyByAppName(t *testing.T) {
 		t.Fatal("Expected key to be returned")
 	}
 
+	if key.Id != 2 {
+		t.Errorf("Expected id 2, got %d", key.Id)
+	}
+
 	if key.AccessToken != "token-2" {
 		t.Errorf("Expected access token 'token-2', got %s", key.AccessToken)
 	}
@@ -619,6 +717,7 @@ func TestFindKeyByAppName_notFound(t *testing.T) {
 		result := APIKeyQueryResult{
 			Items: []APIKey{
 				{
+					Id:          1,
 					AccessToken: "token-1",
 					AppName:     "App One",
 					DateCreated: "2024-01-01T00:00:00.0000000Z",
